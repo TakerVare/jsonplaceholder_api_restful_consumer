@@ -42,6 +42,49 @@ La IA realizo las siguientes preguntas para tomar decisiones de arquitectura:
 
 ---
 
+### Mensaje 3 - Usuario
+**Feedback**: "He realizado algunas pruebas de los endpoints y parece que funciona bien."
+
+**Solicitud**: Implementar:
+1. Manejo de errores global (middleware)
+2. Logging
+
+**Requisito adicional**: Anadir comentarios en el codigo explicando el porqe de cada nueva funcionalidad.
+
+---
+
+### Respuesta IA - Implementacion de Mejoras
+Se implementaron las siguientes funcionalidades:
+
+#### 1. Middleware de Manejo de Errores Global
+**Archivo**: `Middleware/GlobalExceptionHandlerMiddleware.cs`
+- Captura todas las excepciones no manejadas en un solo lugar
+- Genera respuestas de error estandarizadas (ErrorResponse)
+- Clasifica excepciones por tipo (HttpRequestException, TaskCanceledException, etc.)
+- Incluye TraceId para correlacion con logs
+- No expone detalles internos en produccion
+
+#### 2. Middleware de Logging de Requests
+**Archivo**: `Middleware/RequestLoggingMiddleware.cs`
+- Registra inicio y fin de cada peticion HTTP
+- Mide tiempo de respuesta con Stopwatch
+- Ajusta nivel de log segun codigo de estado (Info/Warning/Error)
+- Incluye TraceId para trazabilidad
+
+#### 3. Logging en Repositorios
+**Archivo**: `Repositories/PostRepository.cs` (ejemplo)
+- Logging de operaciones CRUD
+- Diferentes niveles: Debug para inicio, Info para resultados, Warning para fallos
+- Parametros estructurados para facilitar busquedas
+
+#### 4. Configuracion Actualizada
+**Archivos**: `appsettings.json`, `Program.cs`
+- Configuracion de niveles de log por namespace
+- Formato de timestamp en logs
+- Configuracion externalizada de URL y timeout de JSONPlaceholder
+
+---
+
 ## Decisiones de Arquitectura
 
 ### Decision 1: Estructura en Capas
@@ -76,6 +119,28 @@ La IA realizo las siguientes preguntas para tomar decisiones de arquitectura:
 - Desacopla la implementacion del contrato
 - Permite cambiar facilmente la fuente de datos
 
+### Decision 4: Middleware de Manejo de Errores Global
+**Fecha**: 2026-01-20
+**Descripcion**: Se implementa un middleware que captura todas las excepciones no manejadas
+
+**Justificacion**:
+- Centralizacion del manejo de errores en un solo punto
+- Respuestas de error consistentes para todos los endpoints
+- Seguridad: no expone detalles internos (stack traces) en produccion
+- Facilita el logging de errores para diagnostico
+- Separacion de responsabilidades (controllers no manejan errores)
+
+### Decision 5: Logging Estructurado
+**Fecha**: 2026-01-20
+**Descripcion**: Se implementa logging en multiples capas con parametros estructurados
+
+**Justificacion**:
+- Observabilidad: monitoreo del trafico y comportamiento de la API
+- Trazabilidad: TraceId permite seguir una peticion a traves de todo el sistema
+- Diagnostico: facilita identificar origen de problemas
+- Auditoria: registro de todas las operaciones realizadas
+- Performance: identificacion de endpoints lentos
+
 ---
 
 ## Registro de Commits
@@ -83,6 +148,7 @@ La IA realizo las siguientes preguntas para tomar decisiones de arquitectura:
 | Commit | Descripcion | Justificacion |
 |--------|-------------|---------------|
 | #1 | Estructura base del proyecto en capas | Arquitectura limpia con separacion de responsabilidades siguiendo SOLID |
+| #2 | Manejo de errores global y logging | Mejora observabilidad, seguridad y mantenibilidad de la API |
 
 ---
 
@@ -110,6 +176,9 @@ src/JsonPlaceholderApi/
 │   ├── AlbumsController.cs
 │   ├── PhotosController.cs
 │   └── TodosController.cs
+├── Middleware/                          <-- NUEVO
+│   ├── GlobalExceptionHandlerMiddleware.cs
+│   └── RequestLoggingMiddleware.cs
 ├── Models/
 │   ├── Post.cs
 │   ├── Comment.cs
@@ -126,7 +195,7 @@ src/JsonPlaceholderApi/
 │   │   ├── IAlbumRepository.cs
 │   │   ├── IPhotoRepository.cs
 │   │   └── ITodoRepository.cs
-│   ├── PostRepository.cs
+│   ├── PostRepository.cs               <-- Actualizado con logging
 │   ├── CommentRepository.cs
 │   ├── UserRepository.cs
 │   ├── AlbumRepository.cs
@@ -146,7 +215,8 @@ src/JsonPlaceholderApi/
 │   ├── AlbumService.cs
 │   ├── PhotoService.cs
 │   └── TodoService.cs
-├── Program.cs
+├── Program.cs                           <-- Actualizado con middlewares
+├── appsettings.json                     <-- Actualizado con config de logging
 └── JsonPlaceholderApi.csproj
 ```
 
@@ -160,6 +230,9 @@ src/JsonPlaceholderApi/
 5. [x] Implementar capa de Servicios
 6. [x] Implementar capa de Controladores
 7. [x] Configurar Swagger
-8. [ ] Probar endpoints
-9. [ ] Agregar manejo de errores global
-10. [ ] Agregar logging
+8. [x] Probar endpoints
+9. [x] Agregar manejo de errores global
+10. [x] Agregar logging
+11. [ ] Agregar logging a los demas repositorios (opcional)
+12. [ ] Agregar tests unitarios (opcional)
+13. [ ] Agregar health checks (opcional)
