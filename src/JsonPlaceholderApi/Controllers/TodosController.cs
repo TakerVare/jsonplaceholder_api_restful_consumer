@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JsonPlaceholderApi.Auth;
 using JsonPlaceholderApi.Models;
+using JsonPlaceholderApi.Models.Auth;
 using JsonPlaceholderApi.Services.Interfaces;
 
 namespace JsonPlaceholderApi.Controllers;
@@ -16,6 +19,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TodoItem>>> GetAll()
     {
         var todos = await _service.GetAllAsync();
@@ -23,6 +27,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<TodoItem>> GetById(int id)
     {
         var todo = await _service.GetByIdAsync(id);
@@ -32,6 +37,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TodoItem>>> GetByUserId(int userId)
     {
         var todos = await _service.GetByUserIdAsync(userId);
@@ -39,6 +45,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpGet("completed")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TodoItem>>> GetCompleted()
     {
         var todos = await _service.GetCompletedAsync();
@@ -46,6 +53,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpGet("pending")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TodoItem>>> GetPending()
     {
         var todos = await _service.GetPendingAsync();
@@ -53,6 +61,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Resources.Todos, Operations.Create)]
     public async Task<ActionResult<TodoItem>> Create(TodoItem todo)
     {
         var created = await _service.CreateAsync(todo);
@@ -62,6 +71,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequirePermission(Resources.Todos, Operations.Update)]
     public async Task<ActionResult<TodoItem>> Update(int id, TodoItem todo)
     {
         var updated = await _service.UpdateAsync(id, todo);
@@ -71,6 +81,7 @@ public class TodosController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Resources.Todos, Operations.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

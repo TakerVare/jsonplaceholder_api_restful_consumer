@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JsonPlaceholderApi.Auth;
 using JsonPlaceholderApi.Models;
+using JsonPlaceholderApi.Models.Auth;
 using JsonPlaceholderApi.Services.Interfaces;
 
 namespace JsonPlaceholderApi.Controllers;
@@ -16,6 +19,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Comment>>> GetAll()
     {
         var comments = await _service.GetAllAsync();
@@ -23,6 +27,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<Comment>> GetById(int id)
     {
         var comment = await _service.GetByIdAsync(id);
@@ -32,6 +37,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet("post/{postId}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Comment>>> GetByPostId(int postId)
     {
         var comments = await _service.GetByPostIdAsync(postId);
@@ -39,6 +45,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Resources.Comments, Operations.Create)]
     public async Task<ActionResult<Comment>> Create(Comment comment)
     {
         var created = await _service.CreateAsync(comment);
@@ -48,6 +55,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequirePermission(Resources.Comments, Operations.Update)]
     public async Task<ActionResult<Comment>> Update(int id, Comment comment)
     {
         var updated = await _service.UpdateAsync(id, comment);
@@ -57,6 +65,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Resources.Comments, Operations.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

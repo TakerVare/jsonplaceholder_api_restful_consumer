@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JsonPlaceholderApi.Auth;
 using JsonPlaceholderApi.Models;
+using JsonPlaceholderApi.Models.Auth;
 using JsonPlaceholderApi.Services.Interfaces;
 
 namespace JsonPlaceholderApi.Controllers;
@@ -16,6 +19,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Photo>>> GetAll()
     {
         var photos = await _service.GetAllAsync();
@@ -23,6 +27,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<Photo>> GetById(int id)
     {
         var photo = await _service.GetByIdAsync(id);
@@ -32,6 +37,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpGet("album/{albumId}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Photo>>> GetByAlbumId(int albumId)
     {
         var photos = await _service.GetByAlbumIdAsync(albumId);
@@ -39,6 +45,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Resources.Photos, Operations.Create)]
     public async Task<ActionResult<Photo>> Create(Photo photo)
     {
         var created = await _service.CreateAsync(photo);
@@ -48,6 +55,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequirePermission(Resources.Photos, Operations.Update)]
     public async Task<ActionResult<Photo>> Update(int id, Photo photo)
     {
         var updated = await _service.UpdateAsync(id, photo);
@@ -57,6 +65,7 @@ public class PhotosController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Resources.Photos, Operations.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JsonPlaceholderApi.Auth;
 using JsonPlaceholderApi.Models;
+using JsonPlaceholderApi.Models.Auth;
 using JsonPlaceholderApi.Services.Interfaces;
 
 namespace JsonPlaceholderApi.Controllers;
@@ -16,6 +19,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<User>>> GetAll()
     {
         var users = await _service.GetAllAsync();
@@ -23,6 +27,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<User>> GetById(int id)
     {
         var user = await _service.GetByIdAsync(id);
@@ -32,6 +37,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}/posts")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Post>>> GetPosts(int id)
     {
         var posts = await _service.GetPostsAsync(id);
@@ -39,6 +45,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}/albums")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Album>>> GetAlbums(int id)
     {
         var albums = await _service.GetAlbumsAsync(id);
@@ -46,6 +53,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}/todos")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodos(int id)
     {
         var todos = await _service.GetTodosAsync(id);
@@ -53,6 +61,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Resources.Users, Operations.Create)]
     public async Task<ActionResult<User>> Create(User user)
     {
         var created = await _service.CreateAsync(user);
@@ -62,6 +71,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequirePermission(Resources.Users, Operations.Update)]
     public async Task<ActionResult<User>> Update(int id, User user)
     {
         var updated = await _service.UpdateAsync(id, user);
@@ -71,6 +81,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Resources.Users, Operations.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

@@ -49,39 +49,72 @@ La IA realizo las siguientes preguntas para tomar decisiones de arquitectura:
 1. Manejo de errores global (middleware)
 2. Logging
 
-**Requisito adicional**: Anadir comentarios en el codigo explicando el porqe de cada nueva funcionalidad.
+**Requisito adicional**: Anadir comentarios en el codigo explicando el porque de cada nueva funcionalidad.
 
 ---
 
-### Respuesta IA - Implementacion de Mejoras
-Se implementaron las siguientes funcionalidades:
+### Mensaje 4 - Usuario
+**Pregunta**: "Crees que seria conveniente implementar JWT y/o OAuth 2.0? Aportaria alguna funcionalidad interesante para este proyecto?"
 
-#### 1. Middleware de Manejo de Errores Global
-**Archivo**: `Middleware/GlobalExceptionHandlerMiddleware.cs`
-- Captura todas las excepciones no manejadas en un solo lugar
-- Genera respuestas de error estandarizadas (ErrorResponse)
-- Clasifica excepciones por tipo (HttpRequestException, TaskCanceledException, etc.)
-- Incluye TraceId para correlacion con logs
-- No expone detalles internos en produccion
+**Respuesta IA**: Se explico que para ESTE proyecto especifico no era estrictamente necesario porque:
+- Los datos de JSONPlaceholder son ficticios
+- No hay usuarios reales ni operaciones sensibles
+- Seria over-engineering sin beneficio real
 
-#### 2. Middleware de Logging de Requests
-**Archivo**: `Middleware/RequestLoggingMiddleware.cs`
-- Registra inicio y fin de cada peticion HTTP
-- Mide tiempo de respuesta con Stopwatch
-- Ajusta nivel de log segun codigo de estado (Info/Warning/Error)
-- Incluye TraceId para trazabilidad
+Sin embargo, se menciono que tiene valor educativo si el objetivo es aprender/demostrar conocimientos.
 
-#### 3. Logging en Repositorios
-**Archivo**: `Repositories/PostRepository.cs` (ejemplo)
-- Logging de operaciones CRUD
-- Diferentes niveles: Debug para inicio, Info para resultados, Warning para fallos
-- Parametros estructurados para facilitar busquedas
+**Decision Usuario**: Inicialmente "No implementar", luego cambio a "Implementar JWT".
 
-#### 4. Configuracion Actualizada
-**Archivos**: `appsettings.json`, `Program.cs`
-- Configuracion de niveles de log por namespace
-- Formato de timestamp en logs
-- Configuracion externalizada de URL y timeout de JSONPlaceholder
+---
+
+### Mensaje 5 - Usuario
+**Solicitud**: "Me lo he pensado mejor, implementa JWT y OAuth 2.0"
+
+**Preguntas de Clarificacion - IA**:
+1. **Tipo de autenticacion**: JWT simple (login con usuario/contrasena)
+2. **Endpoints a proteger**: Solo escritura (POST, PUT, DELETE)
+3. **Sistema de roles**: Roles avanzados con permisos granulares
+
+---
+
+### Respuesta IA - Implementacion de JWT
+
+Se implemento un sistema completo de autenticacion y autorizacion:
+
+#### 1. Modelos de Autenticacion
+**Carpeta**: `Models/Auth/`
+- `AppUser.cs`: Usuario del sistema con roles y permisos
+- `Permission.cs`: Permisos granulares (Resource.Operation)
+- `Role.cs`: Roles predefinidos (Admin, Editor, Viewer)
+- `AuthDtos.cs`: DTOs para login, registro y respuestas
+- `JwtSettings.cs`: Configuracion de JWT
+
+#### 2. Sistema de Permisos Granulares
+**Carpeta**: `Auth/`
+- `PermissionRequirement.cs`: Requisito de autorizacion
+- `PermissionHandler.cs`: Handler que evalua permisos
+- `RequirePermissionAttribute.cs`: Atributo para proteger endpoints
+
+#### 3. Servicio de Autenticacion
+**Archivo**: `Services/AuthService.cs`
+- Login con validacion de credenciales
+- Registro de nuevos usuarios
+- Generacion de tokens JWT con claims de permisos
+- Hash de contrasenas con PBKDF2
+- Usuarios de prueba: admin, editor, viewer
+
+#### 4. Controlador de Autenticacion
+**Archivo**: `Controllers/AuthController.cs`
+- POST /api/auth/login
+- POST /api/auth/register
+- GET /api/auth/me
+- GET /api/auth/roles
+- GET /api/auth/validate
+
+#### 5. Proteccion de Endpoints
+Todos los controladores actualizados con:
+- `[AllowAnonymous]` en GET (lectura publica)
+- `[RequirePermission(Resource, Operation)]` en POST, PUT, DELETE
 
 ---
 
@@ -90,11 +123,6 @@ Se implementaron las siguientes funcionalidades:
 ### Decision 1: Estructura en Capas
 **Fecha**: 2026-01-20
 **Descripcion**: Se adopta arquitectura en capas para separacion de responsabilidades
-**Capas**:
-- **Models**: Entidades que representan los datos de JSONPlaceholder
-- **Repositories**: Acceso a datos externos (consumo de API)
-- **Services**: Logica de negocio
-- **Controllers**: Endpoints REST expuestos
 
 **Justificacion**:
 - Facilita el mantenimiento y testing
@@ -127,8 +155,6 @@ Se implementaron las siguientes funcionalidades:
 - Centralizacion del manejo de errores en un solo punto
 - Respuestas de error consistentes para todos los endpoints
 - Seguridad: no expone detalles internos (stack traces) en produccion
-- Facilita el logging de errores para diagnostico
-- Separacion de responsabilidades (controllers no manejan errores)
 
 ### Decision 5: Logging Estructurado
 **Fecha**: 2026-01-20
@@ -138,8 +164,27 @@ Se implementaron las siguientes funcionalidades:
 - Observabilidad: monitoreo del trafico y comportamiento de la API
 - Trazabilidad: TraceId permite seguir una peticion a traves de todo el sistema
 - Diagnostico: facilita identificar origen de problemas
-- Auditoria: registro de todas las operaciones realizadas
-- Performance: identificacion de endpoints lentos
+
+### Decision 6: Autenticacion JWT con Permisos Granulares
+**Fecha**: 2026-01-20
+**Descripcion**: Se implementa autenticacion JWT con sistema de roles y permisos por recurso/operacion
+
+**Justificacion**:
+- **JWT (JSON Web Tokens)**:
+  - Stateless: no requiere almacenar sesiones en servidor
+  - Escalable: funciona bien en arquitecturas distribuidas
+  - Seguro: firmado digitalmente, no modificable
+  - Estandar: ampliamente adoptado en la industria
+
+- **Permisos Granulares (RBAC)**:
+  - Control fino: permisos especificos por recurso y operacion
+  - Flexibilidad: roles predefinidos + permisos directos
+  - Principio de minimo privilegio: usuarios solo tienen lo necesario
+  - Auditoria: facil rastrear quien puede hacer que
+
+- **Proteccion solo en escritura**:
+  - GET publicos: datos ficticios, sin informacion sensible
+  - POST/PUT/DELETE protegidos: operaciones que modifican datos
 
 ---
 
@@ -149,37 +194,78 @@ Se implementaron las siguientes funcionalidades:
 |--------|-------------|---------------|
 | #1 | Estructura base del proyecto en capas | Arquitectura limpia con separacion de responsabilidades siguiendo SOLID |
 | #2 | Manejo de errores global y logging | Mejora observabilidad, seguridad y mantenibilidad de la API |
+| #3 | Autenticacion JWT con permisos granulares | Seguridad en endpoints de escritura, sistema RBAC flexible |
 
 ---
 
-## Recursos de JSONPlaceholder Implementados
+## Sistema de Roles y Permisos
 
-| Recurso | Endpoint Propio | Operaciones | Descripcion |
-|---------|-----------------|-------------|-------------|
-| Posts | /api/posts | GET, GET/{id}, GET/user/{userId}, GET/{id}/comments, POST, PUT, DELETE | Publicaciones de blog |
-| Comments | /api/comments | GET, GET/{id}, GET/post/{postId}, POST, PUT, DELETE | Comentarios de posts |
-| Users | /api/users | GET, GET/{id}, GET/{id}/posts, GET/{id}/albums, GET/{id}/todos, POST, PUT, DELETE | Usuarios del sistema |
-| Albums | /api/albums | GET, GET/{id}, GET/user/{userId}, GET/{id}/photos, POST, PUT, DELETE | Albums de fotos |
-| Photos | /api/photos | GET, GET/{id}, GET/album/{albumId}, POST, PUT, DELETE | Fotos individuales |
-| Todos | /api/todos | GET, GET/{id}, GET/user/{userId}, GET/completed, GET/pending, POST, PUT, DELETE | Lista de tareas |
+### Roles Predefinidos
+
+| Rol | Descripcion | Permisos |
+|-----|-------------|----------|
+| **Admin** | Acceso total | Todos los recursos: Create, Read, Update, Delete |
+| **Editor** | Crear y modificar | Todos los recursos: Create, Read, Update (sin Delete) |
+| **Viewer** | Solo lectura | Todos los recursos: Read |
+
+### Usuarios de Prueba
+
+| Usuario | Contrasena | Rol |
+|---------|------------|-----|
+| admin | admin123 | Admin |
+| editor | editor123 | Editor |
+| viewer | viewer123 | Viewer |
+
+### Formato de Permisos
+
+```
+{Recurso}.{Operacion}
+
+Recursos: Posts, Comments, Users, Albums, Photos, Todos
+Operaciones: Create, Read, Update, Delete
+
+Ejemplos: Posts.Create, Users.Delete, Albums.Update
+```
 
 ---
 
-## Estructura del Proyecto
+## Endpoints de Autenticacion
+
+| Metodo | Endpoint | Descripcion | Autenticacion |
+|--------|----------|-------------|---------------|
+| POST | /api/auth/login | Iniciar sesion | No |
+| POST | /api/auth/register | Registrar usuario | No |
+| GET | /api/auth/me | Obtener usuario actual | Si |
+| GET | /api/auth/roles | Listar roles disponibles | No |
+| GET | /api/auth/validate | Validar token | Si |
+
+---
+
+## Estructura del Proyecto Actualizada
 
 ```
 src/JsonPlaceholderApi/
+├── Auth/                                   <-- NUEVO
+│   ├── PermissionRequirement.cs
+│   └── RequirePermissionAttribute.cs
 ├── Controllers/
-│   ├── PostsController.cs
-│   ├── CommentsController.cs
-│   ├── UsersController.cs
-│   ├── AlbumsController.cs
-│   ├── PhotosController.cs
-│   └── TodosController.cs
-├── Middleware/                          <-- NUEVO
+│   ├── AuthController.cs                   <-- NUEVO
+│   ├── PostsController.cs                  <-- Actualizado con [RequirePermission]
+│   ├── CommentsController.cs               <-- Actualizado
+│   ├── UsersController.cs                  <-- Actualizado
+│   ├── AlbumsController.cs                 <-- Actualizado
+│   ├── PhotosController.cs                 <-- Actualizado
+│   └── TodosController.cs                  <-- Actualizado
+├── Middleware/
 │   ├── GlobalExceptionHandlerMiddleware.cs
 │   └── RequestLoggingMiddleware.cs
 ├── Models/
+│   ├── Auth/                               <-- NUEVO
+│   │   ├── AppUser.cs
+│   │   ├── AuthDtos.cs
+│   │   ├── JwtSettings.cs
+│   │   ├── Permission.cs
+│   │   └── Role.cs
 │   ├── Post.cs
 │   ├── Comment.cs
 │   ├── User.cs
@@ -187,37 +273,16 @@ src/JsonPlaceholderApi/
 │   ├── Photo.cs
 │   └── TodoItem.cs
 ├── Repositories/
-│   ├── Interfaces/
-│   │   ├── IRepository.cs
-│   │   ├── IPostRepository.cs
-│   │   ├── ICommentRepository.cs
-│   │   ├── IUserRepository.cs
-│   │   ├── IAlbumRepository.cs
-│   │   ├── IPhotoRepository.cs
-│   │   └── ITodoRepository.cs
-│   ├── PostRepository.cs               <-- Actualizado con logging
-│   ├── CommentRepository.cs
-│   ├── UserRepository.cs
-│   ├── AlbumRepository.cs
-│   ├── PhotoRepository.cs
-│   └── TodoRepository.cs
+│   └── ...
 ├── Services/
 │   ├── Interfaces/
-│   │   ├── IPostService.cs
-│   │   ├── ICommentService.cs
-│   │   ├── IUserService.cs
-│   │   ├── IAlbumService.cs
-│   │   ├── IPhotoService.cs
-│   │   └── ITodoService.cs
-│   ├── PostService.cs
-│   ├── CommentService.cs
-│   ├── UserService.cs
-│   ├── AlbumService.cs
-│   ├── PhotoService.cs
-│   └── TodoService.cs
-├── Program.cs                           <-- Actualizado con middlewares
-├── appsettings.json                     <-- Actualizado con config de logging
-└── JsonPlaceholderApi.csproj
+│   │   ├── IAuthService.cs                 <-- NUEVO
+│   │   └── ...
+│   ├── AuthService.cs                      <-- NUEVO
+│   └── ...
+├── Program.cs                              <-- Actualizado con JWT
+├── appsettings.json                        <-- Actualizado con JwtSettings
+└── JsonPlaceholderApi.csproj               <-- Actualizado con paquete JWT
 ```
 
 ---
@@ -233,6 +298,8 @@ src/JsonPlaceholderApi/
 8. [x] Probar endpoints
 9. [x] Agregar manejo de errores global
 10. [x] Agregar logging
-11. [ ] Agregar logging a los demas repositorios (opcional)
-12. [ ] Agregar tests unitarios (opcional)
-13. [ ] Agregar health checks (opcional)
+11. [x] Implementar autenticacion JWT
+12. [x] Implementar sistema de roles y permisos
+13. [ ] Agregar refresh tokens (opcional)
+14. [ ] Agregar tests unitarios (opcional)
+15. [ ] Agregar health checks (opcional)

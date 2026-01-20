@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using JsonPlaceholderApi.Auth;
 using JsonPlaceholderApi.Models;
+using JsonPlaceholderApi.Models.Auth;
 using JsonPlaceholderApi.Services.Interfaces;
 
 namespace JsonPlaceholderApi.Controllers;
@@ -16,6 +19,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Album>>> GetAll()
     {
         var albums = await _service.GetAllAsync();
@@ -23,6 +27,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<Album>> GetById(int id)
     {
         var album = await _service.GetByIdAsync(id);
@@ -32,6 +37,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Album>>> GetByUserId(int userId)
     {
         var albums = await _service.GetByUserIdAsync(userId);
@@ -39,6 +45,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpGet("{id}/photos")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Photo>>> GetPhotos(int id)
     {
         var photos = await _service.GetPhotosAsync(id);
@@ -46,6 +53,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission(Resources.Albums, Operations.Create)]
     public async Task<ActionResult<Album>> Create(Album album)
     {
         var created = await _service.CreateAsync(album);
@@ -55,6 +63,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequirePermission(Resources.Albums, Operations.Update)]
     public async Task<ActionResult<Album>> Update(int id, Album album)
     {
         var updated = await _service.UpdateAsync(id, album);
@@ -64,6 +73,7 @@ public class AlbumsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequirePermission(Resources.Albums, Operations.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);
